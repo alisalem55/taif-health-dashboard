@@ -8,7 +8,7 @@ import io
 import re
 
 # إعداد واجهة البرنامج لتكون عريضة ومناسبة لـ Dashboard غرف العمليات
-st.set_page_config(page_title="رادار الرصد الحي والإنذار المبكر - الطائف", layout="wide")
+st.set_page_config(page_title="منظومة الرصد الموحد والأزمات - الطائف", layout="wide")
 
 st.markdown("<h1 style='text-align: right; color: #007A33;'>📱 رادار الرصد الحي والإنذار المبكر - الطائف</h1>", unsafe_allow_html=True)
 st.markdown("<p style='text-align: right;'>مراقبة حية وشاملة للمنصات الإخبارية للتحذيرات، الحرائق، وبلاغات الطائف الحقيقية دون حظر السيرفرات.</p>", unsafe_allow_html=True)
@@ -35,19 +35,20 @@ def check_login():
     return True
 
 if check_login():
-    @st.cache_data(ttl=30)  # تحديث حقيقي وتلقائي كل 30 ثانية من الإنترنت مباشرة
+    @st.cache_data(ttl=60)  # تحديث حقيقي وتلقائي كل 60 ثانية من الإنترنت مباشرة
     def fetch_health_news(search_query):
         try:
             search_query = search_query.strip()
             
-            # واجهة بحث حية وعلنية بديلة ومقاومة للحظر بنسبة 100% لقراءة آخر أخبار الطائف المنشورة على الويب الآن
-            url = f"https://duckduckgo.com{urllib.parse.quote(search_query + ' طوارئ صحة حريق أمطار')}&format=json&no_html=1"
+            # واجهة اتصال رسمية ومفتوحة تتجاوز حظر خوادم الاستضافة لجلب البيانات الحقيقية المنشورة الآن
+            url = f"https://newsapi.org{urllib.parse.quote(search_query)}&apiKey=6f7d2f97c4844d039be4949ef95fbc9a&language=ar"
             
             response = requests.get(url, timeout=10)
             if response.status_code != 200:
                 return pd.DataFrame()
                 
             json_data = response.json()
+            articles = json_data.get("articles", [])
             news_list = []
             
             alert_keywords = ["تحذير", "الإنذار", "تنبيه", "أرصاد", "سيول", "أمطار", "توقعات", "الأرصاد"]
@@ -55,30 +56,34 @@ if check_login():
             negative_keywords = ["شكوى", "إهمال", "ازدحام", "نقص", "تأخر", "سوء", "معاناة", "تذمر", "تعطل"]
             positive_keywords = ["إشادة", "شكر", "نجاح", "تميز", "جاهزية", "تكريم", "افتتاح", "شكراً", "تدشين"]
             
-            # قراءة النتائج الحقيقية المرتبطة بالإنترنت (RelatedTopics)
-            topics = json_data.get("RelatedTopics", [])
-            if not topics:
+            if not articles:
                 return pd.DataFrame()
                 
-            for item in topics[:20]:
-                if "Text" in item and "FirstURL" in item:
-                    text = item["Text"]
-                    link = item["FirstURL"]
-                    
-                    sentiment = "🟡 محايد / استفسار"
-                    if any(word in text for word in alert_keywords): sentiment = "⚠️ تحذير / طوارئ عاجلة"
-                    elif any(word in text for word in fire_keywords): sentiment = "🔥 حريق / حادثة"
-                    elif any(word in text for word in negative_keywords): sentiment = "🔴 سلبي / شكوى حرج"
-                    elif any(word in text for word in positive_keywords): sentiment = "🟢 إيجابي / جاهزية"
-                    
-                    news_list.append({
-                        "التاريخ والوقت": datetime.now().strftime('%Y-%m-%d %H:%M'),
-                        "اسم المغرد / المصدر": "رصد_الويب_الحي",
-                        "المنشور / رصد منصة X": text,
-                        "رابط المصدر المباشر": get_clean_url(text),
-                        "نوع الحدث": sentiment
-                    })
-                    
+            for item in articles[:30]:
+                title = item.get("title", "")
+                source_name = item.get("source", {}).get("name", "رصد_الويب_الحي")
+                pub_date = item.get("publishedAt", datetime.now().strftime('%Y-%m-%d %H:%M'))
+                
+                # تنظيف صيغة التاريخ لتصبح مقروءة
+                try:
+                    clean_date = pub_date.replace("T", " ").replace("Z", "")[:16]
+                except:
+                    clean_date = pub_date
+                
+                sentiment = "🟡 محايد / استفسار"
+                if any(word in title for word in alert_keywords): sentiment = "⚠️ تحذير / طوارئ عاجلة"
+                elif any(word in title for word in fire_keywords): sentiment = "🔥 حريق / حادثة"
+                elif any(word in title for word in negative_keywords): sentiment = "🔴 سلبي / شكوى حرج"
+                elif any(word in title for word in positive_keywords): sentiment = "🟢 إيجابي / جاهزية"
+                
+                news_list.append({
+                    "التاريخ والوقت": clean_date,
+                    "اسم المغرد / المصدر": source_name if source_name else "منصة_X",
+                    "المنشور / رصد منصة X": title,
+                    "رابط المصدر المباشر": get_clean_url(title),
+                    "نوع الحدث": sentiment
+                })
+                
             return pd.DataFrame(news_list)
         except:
             return pd.DataFrame()
@@ -110,7 +115,7 @@ if check_login():
         st.cache_data.clear()
         st.rerun()
 
-    # استدعاء دالة الجلب الحقيقية والمضادة للحظر تماماً
+    # استدعاء دالة الجلب الحقيقية والمحمية ضد حظر السيرفرات
     df = fetch_health_news(branch_name)
     if not df.empty:
         total = len(df)
@@ -168,7 +173,7 @@ if check_login():
         selected_sentiment = st.multiselect("تصفية غرف العمليات حسب نوع الحدث لسرعة التدخل:", df["نوع الحدث"].unique(), default=df["نوع الحدث"].unique())
         filtered_df = df[df["نوع الحدث"].isin(selected_sentiment)]
         
-        # استخدام ميزة LinkColumn للتوجه المباشر إلى المنشور والبحث الفوري عن التغريدة داخل إكس لفك التشفير
+        # استخدام ميزة LinkColumn للتوجه المباشر إلى البحث التلقائي الفوري عن التغريدة داخل إكس لفك التشفير بناءً على النص الفعلي
         st.data_editor(
             filtered_df,
             column_config={
