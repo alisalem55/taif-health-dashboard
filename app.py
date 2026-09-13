@@ -12,13 +12,25 @@ st.set_page_config(page_title="منظومة الرصد والإنذار المب
 st.markdown("<h1 style='text-align: right; color: #007A33;'>🏥 منظومة الرصد الإعلامي والإنذار المبكر الشاملة</h1>", unsafe_allow_html=True)
 st.markdown("<p style='text-align: right;'>مراقبة حية وشاملة لجميع منصات الأخبار ومواقع التواصل لفرع وزارة الصحة للتنبؤ بالأزمات قبل تفاقمها.</p>", unsafe_allow_html=True)
 
-# دالة ذكية وفورية لفك تشفير روابط جوجل واستخراج الرابط الأصلي النقي للموقع أو المنشور
-def get_clean_url(google_rss_url):
+# دالة ذكية لتحويل الرابط إلى بحث مباشر داخل إكس أو تتبع المواقع العادية
+def get_clean_url(google_rss_url, title_text):
     try:
+        # تتبع مسار الرابط برمجياً لمعرفة المصدر
         response = requests.head(google_rss_url, allow_redirects=True, timeout=3)
-        return response.url
+        final_url = response.url
+        
+        # إذا كان الرابط قادماً من منصة إكس أو تويتر، نحوله برمجياً إلى بحث مباشر ومكتوب لتجنب الحظر الأمني
+        if "x.com" in final_url or "twitter.com" in final_url:
+            clean_title = title_text.split(" - ")[0].strip() # تنظيف عنوان الخبر
+            encoded_title = urllib.parse.quote(clean_title) if 'urllib' in globals() else requests.utils.quote(clean_title)
+            return f"https://x.com{encoded_title}&f=live"
+        return final_url
     except:
-        return google_rss_url
+        # حل احتياطي مباشر في حال حدوث أي انقطاع بالشبكة
+        import urllib.parse
+        clean_title = title_text.split(" - ")[0].strip()
+        encoded_title = urllib.parse.quote(clean_title)
+        return f"https://x.com{encoded_title}&f=live"
 
 # دالة توليد بيانات محاكاة واقعية وشاملة لقطاع الصحة حصرياً
 def generate_simulation_data(branch_name):
@@ -27,13 +39,13 @@ def generate_simulation_data(branch_name):
         {
             "التاريخ والوقت": (now - timedelta(minutes=15)).strftime('%Y-%m-%d %H:%M'),
             "المنشور / رصد المنصة": f"تأخر كبير في طوارئ مستشفيات {branch_name} والانتظار يتجاوز 4 ساعات وسط تذمر المراجعين.",
-            "رابط المصدر المباشر": "https://x.com",
+            "رابط المصدر المباشر": "https://x.com" + requests.utils.quote(f"تأخر كبير في طوارئ مستشفيات {branch_name}"),
             "نوع النبرة": "🔴 سلبي / شكوى حرج"
         },
         {
             "التاريخ والوقت": (now - timedelta(hours=1)).strftime('%Y-%m-%d %H:%M'),
             "المنشور / رصد المنصة": f"شكراً لمدير فرع وزارة الصحة بـ {branch_name} على نقل العيادات الخارجية للمبنى الجديد وتطوير الخدمة.",
-            "رابط المصدر المباشر": "https://x.com",
+            "رابط المصدر المباشر": "https://x.com" + requests.utils.quote(f"شكراً لمدير فرع وزارة الصحة بـ {branch_name}"),
             "نوع النبرة": "🟢 إيجابي / إشادة"
         },
         {
@@ -45,20 +57,8 @@ def generate_simulation_data(branch_name):
         {
             "التاريخ والوقت": (now - timedelta(hours=4)).strftime('%Y-%m-%d %H:%M'),
             "المنشور / رصد المنصة": f"استفسار: هل مجمع الملك فيصل الطبي بـ {branch_name} يستقبل حالات العيادات بدون موعد مسبق؟",
-            "رابط المصدر المباشر": "https://x.com",
+            "رابط المصدر المباشر": "https://x.com" + requests.utils.quote(f"مجمع الملك فيصل الطبي بـ {branch_name}"),
             "نوع النبرة": "🟡 محايد / استفسار"
-        },
-        {
-            "التاريخ والوقت": (now - timedelta(days=1)).strftime('%Y-%m-%d %H:%M'),
-            "المنشور / رصد المنصة": f"إنجاز طبي بمستشفى الملك عبدالعزيز التخصصي بـ {branch_name}: نجاح عملية جراحية معقدة ونوعية.",
-            "رابط المصدر المباشر": "https://spa.gov.sa",
-            "نوع النبرة": "🟢 إيجابي / إشادة"
-        },
-        {
-            "التاريخ والوقت": (now - timedelta(days=1, hours=3)).strftime('%Y-%m-%d %H:%M'),
-            "المنشور / رصد المنصة": f"تعطل نظام التكييف في صالة انتظار طوارئ الأطفال بـ {branch_name} ومطالبات بالصيانة العاجلة.",
-            "رابط المصدر المباشر": "https://x.com",
-            "نوع النبرة": "🔴 سلبي / شكوى حرج"
         }
     ]
     return pd.DataFrame(simulated_data)
@@ -92,11 +92,9 @@ if check_login():
             
         try:
             search_query = search_query.strip()
-            
-            # صياغة استعلام استبعاد ذكي وحاسم (يقيد البحث بوزارة الصحة والمستشفيات ويستبعد الحيوان والبيئة تماماً)
             refined_query = f'"{search_query}" AND (صحة OR مستشفى OR طوارئ OR عيادات OR وزارة الصحة) -وقاء -البيطرية -الحيوانية -البيئة -الخيل -الزراعة'
             
-            url = "https://google.com"
+            url = "https://news.google.com/rss/search"
             params = {"q": refined_query, "gl": "SA", "hl": "ar", "ceid": "SA:ar"}
             headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
             
@@ -119,7 +117,8 @@ if check_login():
                 raw_link = item.find('link').text
                 pub_date = item.find('pubDate').text
                 
-                clean_link = get_clean_url(raw_link)
+                # تمرير النص والرابط للحصول على رابط مباشر أو كود بحث مباشر على إكس
+                clean_link = get_clean_url(raw_link, title)
                 
                 try:
                     clean_date = datetime.strptime(pub_date, '%a, %d %b %Y %H:%M:%S %Z').strftime('%Y-%m-%d %H:%M')
@@ -237,8 +236,8 @@ if check_login():
             column_config={
                 "رابط المصدر المباشر": st.column_config.LinkColumn(
                     "رابط المصدر المباشر",
-                    help="اضغط هنا لفتح الرابط الأصلي للمنشور أو الشكوى مباشرة بدون تشفير جوجل",
-                    max_chars=300,
+                    help="اضغط هنا للتوجه إلى الموقع الأصلي أو البحث التلقائي عن التغريدة داخل إكس",
+                    max_chars=400,
                     display_text="🔗 اضغط للانتقال للموقع الأصلي"
                 )
             },
