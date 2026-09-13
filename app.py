@@ -5,6 +5,7 @@ import requests
 from datetime import datetime
 import urllib.parse
 import io
+import time
 
 # إعداد واجهة البرنامج لتكون عريضة ومناسبة لـ Dashboard غرف العمليات
 st.set_page_config(page_title="منظومة الرصد الموحد والأزمات - الطائف", layout="wide")
@@ -34,13 +35,15 @@ def check_login():
     return True
 
 if check_login():
-    @st.cache_data(ttl=10)
+    @st.cache_data(ttl=1)  # خفض مدة الكاش إلى ثانية واحدة لإجبار المتصفح على جلب الملف فوراً
     def fetch_health_news(search_query):
         try:
-            # قراءة مباشرة ومتوافقة مع ملف data.csv المرفوع بمستودعك
-            url = f"https://githubusercontent.com"
+            # استخدام الرابط المباشر للملف مع إضافة كود الوقت لمنع الكاش نهائياً وتخطي حظر السيرفرات
+            timestamp = int(time.time())
+            url = f"https://githubusercontent.com{timestamp}"
             
-            response = requests.get(url, timeout=10)
+            headers = {'Cache-Control': 'no-cache', 'Pragma': 'no-cache'}
+            response = requests.get(url, headers=headers, timeout=10)
             if response.status_code != 200:
                 return pd.DataFrame()
                 
@@ -48,11 +51,10 @@ if check_login():
             
             news_list = []
             for _, row in df_raw.iterrows():
-                # مطابقة أسماء الأعمدة بدقة مع ملفك المرفوع
-                title = row.get("المنشور", "")
-                source_name = row.get("المصدر", "رصد_حقيقي")
-                pub_date = row.get("التاريخ", datetime.now().strftime('%Y-%m-%d %H:%M'))
-                sentiment = row.get("نوع الحدث", "🟡 محايد / استفسار")
+                title = str(row.get("المنشور", ""))
+                source_name = str(row.get("المصدر", "رصد_حقيقي"))
+                pub_date = str(row.get("التاريخ", datetime.now().strftime('%Y-%m-%d %H:%M')))
+                sentiment = str(row.get("نوع الحدث", "🟡 محايد / استفسار"))
                 
                 news_list.append({
                     "التاريخ والوقت": pub_date,
