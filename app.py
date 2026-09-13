@@ -9,22 +9,72 @@ import io
 # إعداد واجهة البرنامج لتكون عريضة ومناسبة لـ Dashboard حكومي
 st.set_page_config(page_title="منظومة الرصد والإنذار المبكر الشاملة", layout="wide")
 
+st.markdown("<h1 style='text-align: right; color: #007A33;'>🏥 منظومة الرصد الإعلامي والإنذار المبكر الشاملة</h1>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: right;'>مراقبة حية وشاملة لجميع منصات الأخبار ومواقع التواصل لفرع وزارة الصحة للتنبؤ بالأزمات قبل تفاقمها.</p>", unsafe_allow_html=True)
+
+# دالة ذكية وفورية لفك تشفير روابط جوجل واستخراج الرابط الأصلي النقي للموقع أو المنشور
+def get_clean_url(google_rss_url):
+    try:
+        # تتبع مسار الرابط برمجياً لمعرفة الوجهة النهائية الأصلية بدون تتبع جوجل
+        response = requests.head(google_rss_url, allow_redirects=True, timeout=3)
+        return response.url
+    except:
+        return google_rss_url
+
+# دالة توليد بيانات محاكاة واقعية وشاملة لجميع المنصات في حال انقطاع البث
+def generate_simulation_data(branch_name):
+    now = datetime.now()
+    simulated_data = [
+        {
+            "التاريخ والوقت": (now - timedelta(minutes=15)).strftime('%Y-%m-%d %H:%M'),
+            "المنشور / رصد المنصة": f"تأخر كبير في طوارئ {branch_name} والانتظار يتجاوز 4 ساعات وسط تذمر المراجعين.",
+            "رابط المصدر المباشر": "https://x.com",
+            "نوع النبرة": "🔴 سلبي / شكوى حرج"
+        },
+        {
+            "التاريخ والوقت": (now - timedelta(hours=1)).strftime('%Y-%m-%d %H:%M'),
+            "المنشور / رصد المنصة": f"شكراً لمدير {branch_name} على التجاوب السريع ونقل العيادات الخارجية للمبنى الجديد.",
+            "رابط المصدر المباشر": "https://x.com",
+            "نوع النبرة": "🟢 إيجابي / إشادة"
+        },
+        {
+            "التاريخ والوقت": (now - timedelta(hours=2)).strftime('%Y-%m-%d %H:%M'),
+            "المنشور / رصد المنصة": f"مواطنون يشتكون من نقص بعض أدوية الأمراض المزمنة في مراكز الرعاية الأولية بـ {branch_name}.",
+            "رابط المصدر المباشر": "https://sabq.org",
+            "نوع النبرة": "🔴 سلبي / شكوى حرج"
+        },
+        {
+            "التاريخ والوقت": (now - timedelta(hours=4)).strftime('%Y-%m-%d %H:%M'),
+            "المنشور / رصد المنصة": f"استفسار: هل مركز اللقاحات في {branch_name} يستقبل المراجعين بدون موعد مسبق؟",
+            "رابط المصدر المباشر": "https://x.com",
+            "نوع النبرة": "🟡 محايد / استفسار"
+        },
+        {
+            "التاريخ والوقت": (now - timedelta(days=1)).strftime('%Y-%m-%d %H:%M'),
+            "المنشور / رصد المنصة": f"إنجاز طبي متميز: نجاح عملية جراحية معقدة ونوعية بمستشفى الملك عبدالعزيز التابع لـ {branch_name}.",
+            "رابط المصدر المباشر": "https://spa.gov.sa",
+            "نوع النبرة": "🟢 إيجابي / إشادة"
+        },
+        {
+            "التاريخ والوقت": (now - timedelta(days=1, hours=3)).strftime('%Y-%m-%d %H:%M'),
+            "المنشور / رصد المنصة": f"تعطل نظام التكييف في صالة انتظار النساء بأحد مراكز {branch_name} ومطالبات بالإصلاح العاجل.",
+            "رابط المصدر المباشر": "https://x.com",
+            "نوع النبرة": "🔴 سلبي / شكوى حرج"
+        }
+    ]
+    return pd.DataFrame(simulated_data)
+
 # دالة مخصصة للتحقق من هوية المسؤول والتحكم بجلسة الدخول الآمنة
 def check_login():
     if "logged_in" not in st.session_state:
         st.session_state["logged_in"] = False
 
     if not st.session_state["logged_in"]:
-        # واجهة شاشة تسجيل الدخول المحمية
         st.markdown("<h2 style='text-align: right; color: #007A33;'>🔒 بوابة الدخول الآمنة - منظومة الرصد الإعلامي</h2>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align: right;'>الرجاء إدخال صلاحيات الوصول المصرح بها لفرع الوزارة للوصول للوحة التحكم.</p>", unsafe_allow_html=True)
-        
-        # حقول الإدخال
         user_input = st.text_input("اسم المستخدم:")
         pass_input = st.text_input("كلمة السر:", type="password")
         
         if st.button("🔓 تسجيل الدخول"):
-            # الإعدادات السرية الافتراضية لاسم المستخدم وكلمة السر
             if user_input == "admin" and pass_input == "MOH@2026":
                 st.session_state["logged_in"] = True
                 st.success("تم التحقق بنجاح! جاري تحميل لوحة التحكم...")
@@ -34,55 +84,8 @@ def check_login():
         return False
     return True
 
-# تفعيل بوابة الحماية، إذا لم يسجل دخول يتوقف الكود هنا تماماً
+# تشغيل بوابة الحماية والبدء بجلب الأخبار عند تحقق الهوية
 if check_login():
-    st.markdown("<h1 style='text-align: right; color: #007A33;'>🏥 منظومة الرصد الإعلامي والإنذار المبكر الشاملة</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: right;'>مراقبة حية وشاملة لجميع منصات الأخبار ومواقع التواصل لفرع وزارة الصحة للتنبؤ بالأزمات قبل تفاقمها.</p>", unsafe_allow_html=True)
-
-    # دالة توليد بيانات محاكاة واقعية وشاملة لجميع المنصات في حال انقطاع البث
-    def generate_simulation_data(branch_name):
-        now = datetime.now()
-        simulated_data = [
-            {
-                "التاريخ والوقت": (now - timedelta(minutes=15)).strftime('%Y-%m-%d %H:%M'),
-                "المنشور / رصد المنصة": f"تأخر كبير في طوارئ {branch_name} والانتظار يتجاوز 4 ساعات وسط تذمر المراجعين.",
-                "رابط المصدر المباشر": "https://x.com",
-                "نوع النبرة": "🔴 سلبي / شكوى حرج"
-            },
-            {
-                "التاريخ والوقت": (now - timedelta(hours=1)).strftime('%Y-%m-%d %H:%M'),
-                "المنشور / رصد المنصة": f"شكراً لمدير {branch_name} على التجاوب السريع ونقل العيادات الخارجية للمبنى الجديد.",
-                "رابط المصدر المباشر": "https://x.com",
-                "نوع النبرة": "🟢 إيجابي / إشادة"
-            },
-            {
-                "التاريخ والوقت": (now - timedelta(hours=2)).strftime('%Y-%m-%d %H:%M'),
-                "المنشور / رصد المنصة": f"مواطنون يشتكون من نقص بعض أدوية الأمراض المزمنة في مراكز الرعاية الأولية بـ {branch_name}.",
-                "رابط المصدر المباشر": "https://sabq.org",
-                "نوع النبرة": "🔴 سلبي / شكوى حرج"
-            },
-            {
-                "التاريخ والوقت": (now - timedelta(hours=4)).strftime('%Y-%m-%d %H:%M'),
-                "المنشور / رصد المنصة": f"استفسار: هل مركز اللقاحات في {branch_name} يستقبل المراجعين بدون موعد مسبق؟",
-                "رابط المصدر المباشر": "https://x.com",
-                "نوع النبرة": "🟡 محايد / استفسار"
-            },
-            {
-                "التاريخ والوقت": (now - timedelta(days=1)).strftime('%Y-%m-%d %H:%M'),
-                "المنشور / رصد المنصة": f"إنجاز طبي متميز: نجاح عملية جراحية معقدة ونوعية بمستشفى الملك عبدالعزيز التابع لـ {branch_name}.",
-                "رابط المصدر المباشر": "https://spa.gov.sa",
-                "نوع النبرة": "🟢 إيجابي / إشادة"
-            },
-            {
-                "التاريخ والوقت": (now - timedelta(days=1, hours=3)).strftime('%Y-%m-%d %H:%M'),
-                "المنشور / رصد المنصة": f"تعطل نظام التكييف في صالة انتظار النساء بأحد مراكز {branch_name} ومطالبات بالإصلاح العاجل.",
-                "رابط المصدر المباشر": "https://x.com",
-                "نوع النبرة": "🔴 سلبي / شكوى حرج"
-            }
-        ]
-        return pd.DataFrame(simulated_data)
-
-    # دالة الرصد الحي الذكية والشاملة لجميع المنصات
     @st.cache_data(ttl=300)
     def fetch_health_news(search_query, force_simulation=False):
         if force_simulation:
@@ -90,7 +93,7 @@ if check_login():
             
         try:
             search_query = search_query.strip()
-            url = "https://google.com"
+            url = "https://news.google.com/rss/search"
             params = {"q": search_query, "gl": "SA", "hl": "ar", "ceid": "SA:ar"}
             headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
             
@@ -108,10 +111,14 @@ if check_login():
             if not items:
                 return generate_simulation_data(search_query), True
                 
-            for item in items[:30]:
+            # جلب أول 10 نتائج وفك تشفيرها فورياً لضمان بقاء سرعة السيرفر عالية
+            for item in items[:10]:
                 title = item.find('title').text
-                link = item.find('link').text
+                raw_link = item.find('link').text
                 pub_date = item.find('pubDate').text
+                
+                # استدعاء دالة فك التشفير لحقن الرابط المباشر الصحيح للموقع
+                clean_link = get_clean_url(raw_link)
                 
                 try:
                     clean_date = datetime.strptime(pub_date, '%a, %d %b %Y %H:%M:%S %Z').strftime('%Y-%m-%d %H:%M')
@@ -127,7 +134,7 @@ if check_login():
                 news_list.append({
                     "التاريخ والوقت": clean_date,
                     "المنشور / رصد المنصة": title,
-                    "رابط المصدر المباشر": link,
+                    "رابط المصدر المباشر": clean_link,
                     "نوع النبرة": sentiment
                 })
                 
@@ -136,12 +143,10 @@ if check_login():
         except:
             return generate_simulation_data(search_query), True
 
-    # دالة تحويل جدول البيانات إلى مستند HTML مخصص للطباعة
     def convert_df_to_html(dataframe, branch):
         html_content = f"""
         <html>
-        <head>
-        <meta charset="utf-8">
+        <head><meta charset="utf-8">
         <style>
             body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; direction: rtl; text-align: right; margin: 30px; }}
             h1 {{ color: #007A33; border-bottom: 2px solid #007A33; padding-bottom: 10px; }}
@@ -149,37 +154,21 @@ if check_login():
             th, td {{ border: 1px solid #ddd; padding: 12px; text-align: right; }}
             th {{ background-color: #007A33; color: white; }}
             tr:nth-child(even) {{ background-color: #f9f9f9; }}
-        </style>
-        </head>
+        </style></head>
         <body>
             <h1>🏥 تقرير الرصد الإعلامي الرسمي - {branch}</h1>
             <p><strong>تاريخ استخراج التقرير:</strong> {datetime.now().strftime('%Y-%m-%d %H:%M')}</p>
             <table>
-                <tr>
-                    <th>التاريخ والوقت</th>
-                    <th>تفاصيل البلاغ / الرصد</th>
-                    <th>نوع النبرة</th>
-                </tr>
+                <tr><th>التاريخ والوقت</th><th>تفاصيل البلاغ / الرصد</th><th>نوع النبرة</th></tr>
         """
         for _, row in dataframe.iterrows():
-            html_content += f"""
-                <tr>
-                    <td>{row['التاريخ والوقت']}</td>
-                    <td>{row['المنشور / رصد المنصة']}</td>
-                    <td>{row['نوع النبرة']}</td>
-                </tr>
-            """
-        html_content += """
-            </table>
-        </body>
-        </html>
-        """
+            html_content += f"<tr><td>{row['التاريخ والوقت']}</td><td>{row['المنشور / رصد المنصة']}</td><td>{row['نوع النبرة']}</td></tr>"
+        html_content += "</table></body></html>"
         return html_content
 
     # شريط التحكم الجانبي
     st.sidebar.header("⚙️ إعدادات الرصد والتحكم")
     branch_name = st.sidebar.text_input("اسم الفرع المستهدف للرصد:", value="صحة الطائف")
-
     mode_selection = st.sidebar.radio("نظام جلب البيانات المفضل:", ["تلقائي آمن (موصى به)", "إجبار طور المحاكاة واختبار الأزمات"])
     force_sim = True if mode_selection == "إجبار طور المحاكاة واختبار الأزمات" else False
 
@@ -187,7 +176,6 @@ if check_login():
         st.cache_data.clear()
         st.rerun()
 
-    # استدعاء البيانات
     df, is_simulated = fetch_health_news(branch_name, force_simulation=force_sim)
     # عرض حالة النظام الحالية للمسؤول
     if is_simulated:
@@ -239,19 +227,18 @@ if check_login():
         
         # جدار الرصد التفاعلي للمسؤول
         st.subheader("🔍 تفاصيل جدار الرصد الحي وعناوين المصادر")
-        selected_sentiment = st.multiselect("تصفية مخصصة حسب النبرة لسرعة التدخل:", df["نوع النبرة"].unique(), default=df["نوع النبرة"].unique())
+        selected_sentiment = st.multiselect("تصفية مخصصة حسب النبرة لسرعة التدخل:", df["نوع النبرة"].unique(), default=df["نوع Nبرة"].unique() if "نوع Nبرة" in df.columns else df["نوع النبرة"].unique())
         filtered_df = df[df["نوع النبرة"].isin(selected_sentiment)]
         
-        # استخدام ميزة LinkColumn لجعل الروابط قابلة للنقر داخل الجدول مباشرة
+        # استخدام ميزة LinkColumn لجعل الروابط قابلة للنقر داخل الجدول مباشرة وتوجيهها للمصدر الأصلي
         st.data_editor(
             filtered_df,
             column_config={
                 "رابط المصدر المباشر": st.column_config.LinkColumn(
                     "رابط المصدر المباشر",
-                    help="اضغط هنا لفتح الرابط الأصلي للمنشور أو الشكوى مباشرة",
-                    validate=r"^https://.*",
-                    max_chars=100,
-                    display_text="🔗 اضغط للانتقال للخبر"
+                    help="اضغط هنا لفتح الرابط الأصلي للمنشور أو الشكوى مباشرة بدون تشفير جوجل",
+                    max_chars=300,
+                    display_text="🔗 اضغط للانتقال للموقع الأصلي"
                 )
             },
             disabled=True,
