@@ -5,6 +5,7 @@ import requests
 import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta
 import urllib.parse
+import io  # تعريف مكتبة الإدخل والإخراج في بداية الكود لإنهاء أخطاء NameError نهائياً
 
 # إعداد واجهة البرنامج لتكون عريضة ومناسبة لـ Dashboard حكومي طارئ
 st.set_page_config(page_title="منظومة الرصد الموحد والأزمات - الطائف", layout="wide")
@@ -27,7 +28,7 @@ def get_clean_url(google_rss_url, title_text):
         encoded_title = urllib.parse.quote(clean_title)
         return f"https://x.com{encoded_title}&f=live"
 
-# دالة محاكاة واقعية محدثة لعام 2026 لتشمل الحرائق والتحذيرات والدفاع المدني
+# دالة محاكاة واقعية محدثة لتشمل الحرائق والتحذيرات والدفاع المدني بقطاع الصحة في الطائف
 def generate_simulation_data(branch_name):
     now = datetime.now()
     simulated_data = [
@@ -76,13 +77,12 @@ def check_login():
     return True
 
 if check_login():
-    @st.cache_data(ttl=120)  # تسريع الجلب كل دقيقتين لمواكبة أحداث الطوارئ والحرائق
+    @st.cache_data(ttl=120)  # جلب سريع كل دقيقتين لمواكبة أحداث الطوارئ
     def fetch_health_news(search_query, force_simulation=False):
         if force_simulation:
             return generate_simulation_data(search_query), True
         try:
             search_query = search_query.strip()
-            # استعلام موسع يدمج قطاع الصحة مع مصطلحات الدفاع المدني، الحرائق، الكوارث والتحذيرات العامة
             emergency_query = f'"{search_query}" AND (صحة OR مستشفى OR طوارئ OR حريق OR "الدفاع المدني" OR تحذير OR كوارث OR "الإنذار المبكر")'
             
             url = "https://google.com"
@@ -96,7 +96,6 @@ if check_login():
             root = ET.fromstring(response.content)
             news_list = []
             
-            # كلمات دلالية لفرز النبرة وتصنيف الحوادث والتحذيرات
             alert_keywords = ["تحذير", "الإنذار", "تنبيه", "أرصاد", "سيول"]
             fire_keywords = ["حريق", "اندلاع", "حادث", "تماس", "إنقاذ"]
             negative_keywords = ["شكوى", "إهمال", "ازدحام", "نقص", "تأخر", "سوء", "معاناة"]
@@ -172,7 +171,6 @@ if check_login():
         st.rerun()
 
     df, is_simulated = fetch_health_news(branch_name, force_simulation=force_sim)
-    # عرض حالة النظام الحالية للمسؤول
     if is_simulated:
         st.info("ℹ️ **حالة النظام:** تم الانتقال تلقائياً لطور الجاهزية والتحليل الذكي (بيانات محاكاة حية للأزمات) لضمان استقرار شاشتك وتفادي قيود الحظر.")
     else:
@@ -186,7 +184,6 @@ if check_login():
         fire_count = len(df[df["نوع النبرة"] == "🔥 حريق / حادثة"])
         neu_count = len(df[df["نوع النبرة"] == "🟡 محايد / استفسار"])
         
-        # نظام الإنذار المبكر الذكي المتطور
         if fire_count > 0 or alert_count > 0:
             st.error(f"🚨 **إنذار غرف العمليات عاجل:** تم رصد أحداث طارئة ({fire_count} حوادث/حرائق و {alert_count} تحذيرات جوية) في {branch_name}! يرجى اتخاذ التدابير الوقائية فوراً.")
         elif neg_count > 0:
@@ -229,12 +226,10 @@ if check_login():
 
         st.markdown("---")
         
-        # جدار الرصد التفاعلي للمسؤول
         st.subheader("🔍 تفاصيل جدار الرصد الموحد وعناوين المصادر")
         selected_sentiment = st.multiselect("تصفية غرف العمليات حسب نوع الحدث لسرعة التدخل:", df["نوع النبرة"].unique(), default=df["نوع النبرة"].unique())
         filtered_df = df[df["نوع النبرة"].isin(selected_sentiment)]
         
-        # استخدام ميزة LinkColumn للتوجه المباشر إلى المنشور أو البحث الفوري عن التغريدة داخل إكس لفك التشفير
         st.data_editor(
             filtered_df,
             column_config={
@@ -253,7 +248,6 @@ if check_login():
         st.markdown("### 📥 مركز تصدير التقارير الرسمية")
         export_col1, export_col2 = st.columns(2)
         
-        # 1. آلية تصدير إكسل (Excel)
         excel_buffer = io.BytesIO()
         with pd.ExcelWriter(excel_buffer, engine='openpyxl') as writer:
             filtered_df.to_excel(writer, index=False, sheet_name='تقرير الطوارئ والرصد')
@@ -268,7 +262,6 @@ if check_login():
                 use_container_width=True
             )
             
-        # 2. آلية تصدير التقرير العربي بصيغة HTML مخصصة للطباعة الفورية وحفظها كـ PDF
         html_report = convert_df_to_html(filtered_df, branch_name)
         
         with export_col2:
@@ -279,6 +272,5 @@ if check_login():
                 mime="text/html",
                 use_container_width=True
             )
-
     else:
-        st.warning("جاري تجميع بيانات الطوارئ والحرائق الحية... يرجى التأكد من اتصال الإنترنت أو الضغط على زر التحديث بالجانب الأيسر.")
+        st.warning("جاري تجميع بيانات الطوارئ والحرائق الحية...")
