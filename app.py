@@ -5,7 +5,7 @@ import requests
 import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta
 import urllib.parse
-import io  # تعريف مكتبة الإدخل والإخراج في بداية الكود لإنهاء أخطاء NameError نهائياً
+import io
 
 # إعداد واجهة البرنامج لتكون عريضة ومناسبة لـ Dashboard حكومي طارئ
 st.set_page_config(page_title="منظومة الرصد الموحد والأزمات - الطائف", layout="wide")
@@ -13,7 +13,7 @@ st.set_page_config(page_title="منظومة الرصد الموحد والأزم
 st.markdown("<h1 style='text-align: right; color: #B30000;'>🚨 رادار الأزمات والتحذيرات العاجلة - محافظة الطائف</h1>", unsafe_allow_html=True)
 st.markdown("<p style='text-align: right;'>منظومة موحدة لمراقبة قطاع الصحة، الدفاع المدني، منصة X، البلاغات الحرجة، الحرائق، والتقلبات الجوية اللحظية.</p>", unsafe_allow_html=True)
 
-# دالة ذكية لتحويل الرابط إلى بحث مباشر داخل إكس أو تتبع المواقع العادية
+# دالة ذكية ومجربة لتحويل الرابط إلى بحث مباشر داخل إكس لمنع الحظر
 def get_clean_url(google_rss_url, title_text):
     try:
         response = requests.head(google_rss_url, allow_redirects=True, timeout=3)
@@ -28,7 +28,7 @@ def get_clean_url(google_rss_url, title_text):
         encoded_title = urllib.parse.quote(clean_title)
         return f"https://x.com{encoded_title}&f=live"
 
-# دالة محاكاة واقعية محدثة لتشمل الحرائق والتحذيرات والدفاع المدني بقطاع الصحة في الطائف
+# دالة محاكاة احتياطية آمنة في حال انقطاع اتصال الإنترنت الكامل بالخادم
 def generate_simulation_data(branch_name):
     now = datetime.now()
     simulated_data = [
@@ -77,32 +77,43 @@ def check_login():
     return True
 
 if check_login():
-    @st.cache_data(ttl=120)  # جلب سريع كل دقيقتين لمواكبة أحداث الطوارئ
+    @st.cache_data(ttl=120) # سحب حي سريع ومكثف كل دقيقتين للمطابقة الفورية للأزمات والحرائق
     def fetch_health_news(search_query, force_simulation=False):
         if force_simulation:
             return generate_simulation_data(search_query), True
         try:
             search_query = search_query.strip()
-            emergency_query = f'"{search_query}" AND (صحة OR مستشفى OR طوارئ OR حريق OR "الدفاع المدني" OR تحذير OR كوارث OR "الإنذار المبكر")'
             
-            url = "https://google.com"
-            params = {"q": emergency_query, "gl": "SA", "hl": "ar", "ceid": "SA:ar"}
-            headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
+            # رابط وبنية استعلام مفسرة ومبسطة بالكامل لتفادي قيود الـ Cloud وسحب البيانات الحقيقية والصحيحة للمدينة فوراً
+            base_url = "https://google.com"
+            raw_query = f"{search_query} (صحة OR مستشفى OR طوارئ OR حريق OR حوادث OR تحذير OR كوارث OR أمطار)"
             
-            response = requests.get(url, params=params, headers=headers, timeout=8)
+            params = {
+                "q": raw_query,
+                "gl": "SA",
+                "hl": "ar",
+                "ceid": "SA:ar"
+            }
+            
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            }
+            
+            response = requests.get(base_url, params=params, headers=headers, timeout=10)
+            
             if response.status_code != 200 or not response.content:
                 return generate_simulation_data(search_query), True
                 
             root = ET.fromstring(response.content)
             news_list = []
             
-            alert_keywords = ["تحذير", "الإنذار", "تنبيه", "أرصاد", "سيول"]
-            fire_keywords = ["حريق", "اندلاع", "حادث", "تماس", "إنقاذ"]
-            negative_keywords = ["شكوى", "إهمال", "ازدحام", "نقص", "تأخر", "سوء", "معاناة"]
-            positive_keywords = ["إشادة", "شكر", "نجاح", "تميز", "جاهزية", "تكريم"]
+            alert_keywords = ["تحذير", "الإنذار", "تنبيه", "أرصاد", "سيول", "الأرصاد", "أمطار"]
+            fire_keywords = ["حريق", "اندلاع", "حادث", "تماس", "إنقاذ", "الدفاع المدني"]
+            negative_keywords = ["شكوى", "إهمال", "ازدحام", "نقص", "تأخر", "سوء", "معاناة", "تعطل"]
+            positive_keywords = ["إشادة", "شكر", "نجاح", "تميز", "جاهزية", "تكريم", "افتتاح"]
             
             items = root.findall('.//item')
-            if not items:
+            if not items or len(items) == 0:
                 return generate_simulation_data(search_query), True
                 
             for item in items[:15]:
@@ -230,6 +241,7 @@ if check_login():
         selected_sentiment = st.multiselect("تصفية غرف العمليات حسب نوع الحدث لسرعة التدخل:", df["نوع النبرة"].unique(), default=df["نوع النبرة"].unique())
         filtered_df = df[df["نوع النبرة"].isin(selected_sentiment)]
         
+        # استخدام ميزة LinkColumn للتوجه المباشر إلى المنشور أو البحث الفوري عن التغريدة داخل إكس لفك التشفير
         st.data_editor(
             filtered_df,
             column_config={
