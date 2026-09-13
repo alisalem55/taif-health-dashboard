@@ -34,22 +34,21 @@ def check_login():
     return True
 
 if check_login():
-    @st.cache_data(ttl=30)
+    @st.cache_data(ttl=10)
     def fetch_health_news(search_query):
         try:
-            # رابط قراءة ملف البيانات الحقيقي المرفوع على جيت هاب الخاص بك مباشرة دون أي حظر أو جدران حماية
-            # يرجى استبدال 'alisalem55' باسم حسابك بدقة إذا كان مختلفاً
+            # قراءة مباشرة ومتوافقة مع ملف data.csv المرفوع بمستودعك
             url = f"https://githubusercontent.com"
             
             response = requests.get(url, timeout=10)
             if response.status_code != 200:
                 return pd.DataFrame()
                 
-            # قراءة ملف الـ CSV المشفر بترميز UTF-8 لدعم اللغة العربية
             df_raw = pd.read_csv(io.StringIO(response.text), encoding='utf-8')
             
             news_list = []
             for _, row in df_raw.iterrows():
+                # مطابقة أسماء الأعمدة بدقة مع ملفك المرفوع
                 title = row.get("المنشور", "")
                 source_name = row.get("المصدر", "رصد_حقيقي")
                 pub_date = row.get("التاريخ", datetime.now().strftime('%Y-%m-%d %H:%M'))
