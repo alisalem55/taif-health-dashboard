@@ -125,7 +125,7 @@ if check_login():
             if not items or len(items) == 0:
                 return generate_simulation_data(search_query), True
                 
-            for item in items[:15]:
+            for item in items[:40]:
                 title = item.find('title').text
                 raw_link = item.find('link').text
                 pub_date = item.find('pubDate').text
