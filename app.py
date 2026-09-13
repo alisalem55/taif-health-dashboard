@@ -234,7 +234,7 @@ if check_login():
         selected_sentiment = st.multiselect("تصفية غرف العمليات حسب نوع الحدث لسرعة التدخل:", df["نوع النبرة"].unique(), default=df["نوع النبرة"].unique())
         filtered_df = df[df["نوع النبرة"].isin(selected_sentiment)]
         
-        # استخدام ميزة LinkColumn للتوجه المباشر إلى المنشور أو البحث الفوري على إكس
+        # استخدام ميزة LinkColumn للتوجه المباشر إلى المنشور أو البحث الفوري عن التغريدة داخل إكس لفك التشفير
         st.data_editor(
             filtered_df,
             column_config={
