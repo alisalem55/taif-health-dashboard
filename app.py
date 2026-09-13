@@ -2,19 +2,17 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import requests
-import xml.etree.ElementTree as ET
 from datetime import datetime
 import urllib.parse
 import io
-import re
 
 # إعداد واجهة البرنامج لتكون عريضة ومناسبة لـ Dashboard غرف العمليات
 st.set_page_config(page_title="منظومة الرصد الموحد والأزمات - الطائف", layout="wide")
 
 st.markdown("<h1 style='text-align: right; color: #007A33;'>📱 رادار الرصد الحي والإنذار المبكر - الطائف</h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: right;'>مراقبة حية وشاملة للمنصات الإخبارية للتحذيرات، الحرائق، وبلاغات الطائف الحقيقية دون حظر السيرفرات.</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: right;'>مراقبة حية وشاملة للبلاغات، الحرائق، وتغريدات الطائف الحقيقية المرفوعة عبر مستودعك الآمن.</p>", unsafe_allow_html=True)
 
-# دالة لتتبع وتوليد روابط البحث المباشرة لمنصة X لمنع الحظر الأمني
+# دالة لتوليد روابط البحث المباشرة لمنصة X لمنع الحظر
 def get_clean_url(title_text):
     clean_title = title_text.strip()
     encoded_title = urllib.parse.quote(clean_title)
@@ -36,61 +34,30 @@ def check_login():
     return True
 
 if check_login():
-    @st.cache_data(ttl=30)  # تحديث حي وتلقائي كل 30 ثانية لمطاردة الأزمات والتحذيرات اللحظية
+    @st.cache_data(ttl=30)
     def fetch_health_news(search_query):
         try:
-            search_query = search_query.strip()
+            # رابط قراءة ملف البيانات الحقيقي المرفوع على جيت هاب الخاص بك مباشرة دون أي حظر أو جدران حماية
+            # يرجى استبدال 'alisalem55' باسم حسابك بدقة إذا كان مختلفاً
+            url = f"https://githubusercontent.com"
             
-            # محرك جلب بديل ومحصن بالكامل من الحظر الأمني لقراءة البيانات والوسوم الحقيقية فوراً من الويب
-            encoded_query = urllib.parse.quote(f"{search_query} طوارئ صحة حريق أمطار")
-            url = f"https://google.com{encoded_query}&hl=ar&gl=SA&ceid=SA:ar"
-            
-            # إرسال بصمة متصفح متكاملة (حاسوب شخصي) لخداع جدار الحماية وعبور الطلب بنجاح
-            headers = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-                'Accept-Language': 'ar,en-US;q=0.7,en;q=0.3'
-            }
-            
-            response = requests.get(url, headers=headers, timeout=12)
-            if response.status_code != 200 or not response.content:
+            response = requests.get(url, timeout=10)
+            if response.status_code != 200:
                 return pd.DataFrame()
                 
-            root = ET.fromstring(response.content)
+            # قراءة ملف الـ CSV المشفر بترميز UTF-8 لدعم اللغة العربية
+            df_raw = pd.read_csv(io.StringIO(response.text), encoding='utf-8')
+            
             news_list = []
-            
-            alert_keywords = ["تحذير", "الإنذار", "تنبيه", "أرصاد", "سيول", "أمطار", "توقعات", "الأرصاد"]
-            fire_keywords = ["حريق", "اندلاع", "حادث", "تماس", "إنقاذ", "الدفاع المدني", "حرائق"]
-            negative_keywords = ["شكوى", "إهمال", "ازدحام", "نقص", "تأخر", "سوء", "معاناة", "تذمر", "تعطل"]
-            positive_keywords = ["إشادة", "شكر", "نجاح", "تميز", "جاهزية", "تكريم", "افتتاح", "شكراً", "تدشين"]
-            
-            items = root.findall('.//item')
-            if not items: return pd.DataFrame()
+            for _, row in df_raw.iterrows():
+                title = row.get("المنشور", "")
+                source_name = row.get("المصدر", "رصد_حقيقي")
+                pub_date = row.get("التاريخ", datetime.now().strftime('%Y-%m-%d %H:%M'))
+                sentiment = row.get("نوع الحدث", "🟡 محايد / استفسار")
                 
-            for item in items[:40]:
-                title = item.find('title').text
-                pub_date = item.find('pubDate').text
-                
-                # استخراج اسم المصدر الناشر للخبر بدقة من نهاية العنوان
-                source_name = "رصد_الويب_الحي"
-                if " - " in title:
-                    parts = title.split(" - ")
-                    source_name = parts[-1].strip()
-                    title = " - ".join(parts[:-1]).strip()
-                
-                try:
-                    clean_date = datetime.strptime(pub_date, '%a, %d %b %Y %H:%M:%S %Z').strftime('%Y-%m-%d %H:%M')
-                except: clean_date = pub_date
-
-                sentiment = "🟡 محايد / استفسار"
-                if any(word in title for word in alert_keywords): sentiment = "⚠️ تحذير / طوارئ عاجلة"
-                elif any(word in title for word in fire_keywords): sentiment = "🔥 حريق / حادثة"
-                elif any(word in title for word in negative_keywords): sentiment = "🔴 سلبي / شكوى حرج"
-                elif any(word in title for word in positive_keywords): sentiment = "🟢 إيجابي / جاهزية"
-                    
                 news_list.append({
-                    "التاريخ والوقت": clean_date,
-                    "اسم المغرد / المصدر": source_name if source_name else "منصة_X",
+                    "التاريخ والوقت": pub_date,
+                    "اسم المغرد / المصدر": source_name,
                     "المنشور / رصد منصة X": title,
                     "رابط المصدر المباشر": get_clean_url(title),
                     "نوع الحدث": sentiment
@@ -127,7 +94,6 @@ if check_login():
         st.cache_data.clear()
         st.rerun()
 
-    # استدعاء دالة الجلب المباشرة والمحمية ضد حظر السيرفرات
     df = fetch_health_news(branch_name)
     if not df.empty:
         total = len(df)
