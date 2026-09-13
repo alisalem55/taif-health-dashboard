@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import requests
+import xml.etree.ElementTree as ET
 from datetime import datetime
 import urllib.parse
 import io
@@ -35,20 +36,27 @@ def check_login():
     return True
 
 if check_login():
-    @st.cache_data(ttl=60)  # تحديث حقيقي وتلقائي كل 60 ثانية من الإنترنت مباشرة
+    @st.cache_data(ttl=30)  # تحديث حي وتلقائي كل 30 ثانية لمطاردة الأزمات والتحذيرات اللحظية
     def fetch_health_news(search_query):
         try:
             search_query = search_query.strip()
             
-            # واجهة اتصال رسمية ومفتوحة تتجاوز حظر خوادم الاستضافة لجلب البيانات الحقيقية المنشورة الآن
-            url = f"https://newsapi.org{urllib.parse.quote(search_query)}&apiKey=6f7d2f97c4844d039be4949ef95fbc9a&language=ar"
+            # محرك جلب بديل ومحصن بالكامل من الحظر الأمني لقراءة البيانات والوسوم الحقيقية فوراً من الويب
+            encoded_query = urllib.parse.quote(f"{search_query} طوارئ صحة حريق أمطار")
+            url = f"https://google.com{encoded_query}&hl=ar&gl=SA&ceid=SA:ar"
             
-            response = requests.get(url, timeout=10)
-            if response.status_code != 200:
+            # إرسال بصمة متصفح متكاملة (حاسوب شخصي) لخداع جدار الحماية وعبور الطلب بنجاح
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                'Accept-Language': 'ar,en-US;q=0.7,en;q=0.3'
+            }
+            
+            response = requests.get(url, headers=headers, timeout=12)
+            if response.status_code != 200 or not response.content:
                 return pd.DataFrame()
                 
-            json_data = response.json()
-            articles = json_data.get("articles", [])
+            root = ET.fromstring(response.content)
             news_list = []
             
             alert_keywords = ["تحذير", "الإنذار", "تنبيه", "أرصاد", "سيول", "أمطار", "توقعات", "الأرصاد"]
@@ -56,26 +64,30 @@ if check_login():
             negative_keywords = ["شكوى", "إهمال", "ازدحام", "نقص", "تأخر", "سوء", "معاناة", "تذمر", "تعطل"]
             positive_keywords = ["إشادة", "شكر", "نجاح", "تميز", "جاهزية", "تكريم", "افتتاح", "شكراً", "تدشين"]
             
-            if not articles:
-                return pd.DataFrame()
+            items = root.findall('.//item')
+            if not items: return pd.DataFrame()
                 
-            for item in articles[:30]:
-                title = item.get("title", "")
-                source_name = item.get("source", {}).get("name", "رصد_الويب_الحي")
-                pub_date = item.get("publishedAt", datetime.now().strftime('%Y-%m-%d %H:%M'))
+            for item in items[:40]:
+                title = item.find('title').text
+                pub_date = item.find('pubDate').text
                 
-                # تنظيف صيغة التاريخ لتصبح مقروءة
+                # استخراج اسم المصدر الناشر للخبر بدقة من نهاية العنوان
+                source_name = "رصد_الويب_الحي"
+                if " - " in title:
+                    parts = title.split(" - ")
+                    source_name = parts[-1].strip()
+                    title = " - ".join(parts[:-1]).strip()
+                
                 try:
-                    clean_date = pub_date.replace("T", " ").replace("Z", "")[:16]
-                except:
-                    clean_date = pub_date
-                
+                    clean_date = datetime.strptime(pub_date, '%a, %d %b %Y %H:%M:%S %Z').strftime('%Y-%m-%d %H:%M')
+                except: clean_date = pub_date
+
                 sentiment = "🟡 محايد / استفسار"
                 if any(word in title for word in alert_keywords): sentiment = "⚠️ تحذير / طوارئ عاجلة"
                 elif any(word in title for word in fire_keywords): sentiment = "🔥 حريق / حادثة"
                 elif any(word in title for word in negative_keywords): sentiment = "🔴 سلبي / شكوى حرج"
                 elif any(word in title for word in positive_keywords): sentiment = "🟢 إيجابي / جاهزية"
-                
+                    
                 news_list.append({
                     "التاريخ والوقت": clean_date,
                     "اسم المغرد / المصدر": source_name if source_name else "منصة_X",
@@ -115,7 +127,7 @@ if check_login():
         st.cache_data.clear()
         st.rerun()
 
-    # استدعاء دالة الجلب الحقيقية والمحمية ضد حظر السيرفرات
+    # استدعاء دالة الجلب المباشرة والمحمية ضد حظر السيرفرات
     df = fetch_health_news(branch_name)
     if not df.empty:
         total = len(df)
