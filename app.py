@@ -15,49 +15,48 @@ st.markdown("<p style='text-align: right;'>مراقبة حية وشاملة لج
 # دالة ذكية وفورية لفك تشفير روابط جوجل واستخراج الرابط الأصلي النقي للموقع أو المنشور
 def get_clean_url(google_rss_url):
     try:
-        # تتبع مسار الرابط برمجياً لمعرفة الوجهة النهائية الأصلية بدون تتبع جوجل
         response = requests.head(google_rss_url, allow_redirects=True, timeout=3)
         return response.url
     except:
         return google_rss_url
 
-# دالة توليد بيانات محاكاة واقعية وشاملة لجميع المنصات في حال انقطاع البث
+# دالة توليد بيانات محاكاة واقعية وشاملة لقطاع الصحة حصرياً
 def generate_simulation_data(branch_name):
     now = datetime.now()
     simulated_data = [
         {
             "التاريخ والوقت": (now - timedelta(minutes=15)).strftime('%Y-%m-%d %H:%M'),
-            "المنشور / رصد المنصة": f"تأخر كبير في طوارئ {branch_name} والانتظار يتجاوز 4 ساعات وسط تذمر المراجعين.",
+            "المنشور / رصد المنصة": f"تأخر كبير في طوارئ مستشفيات {branch_name} والانتظار يتجاوز 4 ساعات وسط تذمر المراجعين.",
             "رابط المصدر المباشر": "https://x.com",
             "نوع النبرة": "🔴 سلبي / شكوى حرج"
         },
         {
             "التاريخ والوقت": (now - timedelta(hours=1)).strftime('%Y-%m-%d %H:%M'),
-            "المنشور / رصد المنصة": f"شكراً لمدير {branch_name} على التجاوب السريع ونقل العيادات الخارجية للمبنى الجديد.",
+            "المنشور / رصد المنصة": f"شكراً لمدير فرع وزارة الصحة بـ {branch_name} على نقل العيادات الخارجية للمبنى الجديد وتطوير الخدمة.",
             "رابط المصدر المباشر": "https://x.com",
             "نوع النبرة": "🟢 إيجابي / إشادة"
         },
         {
             "التاريخ والوقت": (now - timedelta(hours=2)).strftime('%Y-%m-%d %H:%M'),
-            "المنشور / رصد المنصة": f"مواطنون يشتكون من نقص بعض أدوية الأمراض المزمنة في مراكز الرعاية الأولية بـ {branch_name}.",
+            "المنشور / رصد المنصة": f"مواطنون يشتكون من نقص بعض أدوية السكري والضغط في مراكز الرعاية الأولية التابعة لـ {branch_name}.",
             "رابط المصدر المباشر": "https://sabq.org",
             "نوع النبرة": "🔴 سلبي / شكوى حرج"
         },
         {
             "التاريخ والوقت": (now - timedelta(hours=4)).strftime('%Y-%m-%d %H:%M'),
-            "المنشور / رصد المنصة": f"استفسار: هل مركز اللقاحات في {branch_name} يستقبل المراجعين بدون موعد مسبق؟",
+            "المنشور / رصد المنصة": f"استفسار: هل مجمع الملك فيصل الطبي بـ {branch_name} يستقبل حالات العيادات بدون موعد مسبق؟",
             "رابط المصدر المباشر": "https://x.com",
             "نوع النبرة": "🟡 محايد / استفسار"
         },
         {
             "التاريخ والوقت": (now - timedelta(days=1)).strftime('%Y-%m-%d %H:%M'),
-            "المنشور / رصد المنصة": f"إنجاز طبي متميز: نجاح عملية جراحية معقدة ونوعية بمستشفى الملك عبدالعزيز التابع لـ {branch_name}.",
+            "المنشور / رصد المنصة": f"إنجاز طبي بمستشفى الملك عبدالعزيز التخصصي بـ {branch_name}: نجاح عملية جراحية معقدة ونوعية.",
             "رابط المصدر المباشر": "https://spa.gov.sa",
             "نوع النبرة": "🟢 إيجابي / إشادة"
         },
         {
             "التاريخ والوقت": (now - timedelta(days=1, hours=3)).strftime('%Y-%m-%d %H:%M'),
-            "المنشور / رصد المنصة": f"تعطل نظام التكييف في صالة انتظار النساء بأحد مراكز {branch_name} ومطالبات بالإصلاح العاجل.",
+            "المنشور / رصد المنصة": f"تعطل نظام التكييف في صالة انتظار طوارئ الأطفال بـ {branch_name} ومطالبات بالصيانة العاجلة.",
             "رابط المصدر المباشر": "https://x.com",
             "نوع النبرة": "🔴 سلبي / شكوى حرج"
         }
@@ -93,8 +92,12 @@ if check_login():
             
         try:
             search_query = search_query.strip()
-            url = "https://news.google.com/rss/search"
-            params = {"q": search_query, "gl": "SA", "hl": "ar", "ceid": "SA:ar"}
+            
+            # صياغة استعلام استبعاد ذكي وحاسم (يقيد البحث بوزارة الصحة والمستشفيات ويستبعد الحيوان والبيئة تماماً)
+            refined_query = f'"{search_query}" AND (صحة OR مستشفى OR طوارئ OR عيادات OR وزارة الصحة) -وقاء -البيطرية -الحيوانية -البيئة -الخيل -الزراعة'
+            
+            url = "https://google.com"
+            params = {"q": refined_query, "gl": "SA", "hl": "ar", "ceid": "SA:ar"}
             headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
             
             response = requests.get(url, params=params, headers=headers, timeout=8)
@@ -111,13 +114,11 @@ if check_login():
             if not items:
                 return generate_simulation_data(search_query), True
                 
-            # جلب أول 10 نتائج وفك تشفيرها فورياً لضمان بقاء سرعة السيرفر عالية
-            for item in items[:10]:
+            for item in items[:12]:
                 title = item.find('title').text
                 raw_link = item.find('link').text
                 pub_date = item.find('pubDate').text
                 
-                # استدعاء دالة فك التشفير لحقن الرابط المباشر الصحيح للموقع
                 clean_link = get_clean_url(raw_link)
                 
                 try:
@@ -181,7 +182,7 @@ if check_login():
     if is_simulated:
         st.info("ℹ️ **حالة النظام:** تم الانتقال تلقائياً لطور الجاهزية والتحليل الذكي (بيانات محاكاة حية للأزمات) لضمان استقرار شاشتك وتفادي قيود الحظر.")
     else:
-        st.success("🛰️ **حالة النظام:** متصل بالبث الحي للشبكة وتدفق الرصد مستقر من جميع المنصات.")
+        st.success("🛰️ **حالة النظام:** متصل بالبث الحي للشبكة وتدفق الرصد مستقر من جميع المنصات الطبية.")
 
     if not df.empty:
         total = len(df)
@@ -227,7 +228,7 @@ if check_login():
         
         # جدار الرصد التفاعلي للمسؤول
         st.subheader("🔍 تفاصيل جدار الرصد الحي وعناوين المصادر")
-        selected_sentiment = st.multiselect("تصفية مخصصة حسب النبرة لسرعة التدخل:", df["نوع النبرة"].unique(), default=df["نوع Nبرة"].unique() if "نوع Nبرة" in df.columns else df["نوع النبرة"].unique())
+        selected_sentiment = st.multiselect("تصفية مخصصة حسب النبرة لسرعة التدخل:", df["نوع النبرة"].unique(), default=df["نوع النبرة"].unique())
         filtered_df = df[df["نوع النبرة"].isin(selected_sentiment)]
         
         # استخدام ميزة LinkColumn لجعل الروابط قابلة للنقر داخل الجدول مباشرة وتوجيهها للمصدر الأصلي
