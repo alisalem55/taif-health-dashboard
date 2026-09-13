@@ -14,13 +14,11 @@ st.set_page_config(page_title="رادار الرصد الحي والإنذار �
 st.markdown("<h1 style='text-align: right; color: #007A33;'>📱 رادار الرصد الحي والإنذار المبكر - الطائف</h1>", unsafe_allow_html=True)
 st.markdown("<p style='text-align: right;'>مراقبة حية وشاملة لـ منصة X والمنصات الإخبارية للتحذيرات، الحرائق، وبلاغات صحة الطائف مع استخراج أسماء المغردين.</p>", unsafe_allow_html=True)
 
-# دالة مخصصة لاستخراج اسم المغرد أو اسم الصحيفة تلقائياً من عنوان الرصد
 def extract_username(title_text, link_url):
     try:
         if "x.com" in link_url or "twitter.com" in link_url:
             match = re.search(r'@(\w+)', title_text)
-            if match:
-                return f"@{match.group(1)}"
+            if match: return f"@{match.group(1)}"
             return "@مغرد_في_الطائف"
         if " - " in title_text:
             return title_text.split(" - ")[-1].strip()
@@ -29,59 +27,32 @@ def extract_username(title_text, link_url):
     except:
         return "مصدر_عام"
 
-# دالة ذكية لتحويل الرابط إلى بحث مباشر داخل إكس لمنع الحظر الأمني
 def get_clean_url(google_rss_url, title_text):
     try:
         response = requests.head(google_rss_url, allow_redirects=True, timeout=3)
         final_url = response.url
         if "x.com" in final_url or "twitter.com" in final_url:
-            clean_title = title_text.split(" - ")[0].strip()
+            clean_title = title_text.split(" - ").strip()
             encoded_title = urllib.parse.quote(clean_title)
             return f"https://x.com{encoded_title}&f=live"
         return final_url
     except:
-        clean_title = title_text.split(" - ")[0].strip()
+        clean_title = title_text.split(" - ").strip()
         encoded_title = urllib.parse.quote(clean_title)
         return f"https://x.com{encoded_title}&f=live"
 
-# دالة محاكاة واقعية محدثة لتشمل أسماء مغردين وبلاغات طارئة لقطاع الصحة والأزمات بالطائف
 def generate_simulation_data(branch_name):
     now = datetime.now()
     simulated_data = [
-        {
-            "التاريخ والوقت": (now - timedelta(minutes=7)).strftime('%Y-%m-%d %H:%M'),
-            "اسم المغرد / المصدر": "@Taif_Voice",
-            "المنشور / رصد منصة X": f"تأخر كبير وتكدس في طوارئ مستشفيات {branch_name} والانتظار يتجاوز 5 ساعات وسط تذمر الأهالي! أين المناوبين؟",
-            "رابط المصدر المباشر": "https://x.com" + urllib.parse.quote(f"طوارئ مستشفيات {branch_name}"),
-            "نوع الحدث": "🔴 سلبي / شكوى حرج"
-        },
-        {
-            "التاريخ والوقت": (now - timedelta(minutes=22)).strftime('%Y-%m-%d %H:%M'),
-            "اسم المغرد / المصدر": "@Defa3Madani",
-            "المنشور / رصد منصة X": f"الدفاع المدني ينجح في إخماد حريق اندلع في مستودع تجاري بـ {branch_name} دون وقوع أي خسائر بشرية ولله الحمد.",
-            "رابط المصدر المباشر": "https://x.com" + urllib.parse.quote(f"حريق الدفاع المدني {branch_name}"),
-            "نوع الحدث": "🔥 حريق / حادثة"
-        },
-        {
-            "التاريخ والوقت": (now - timedelta(hours=1)).strftime('%Y-%m-%d %H:%M'),
-            "اسم المغرد / المصدر": "صحيفة سبق الالكترونية",
-            "المنشور / رصد منصة X": f"صحة {branch_name} تطلق حملة وطنية مكثفة للتبرع بالدم بالمراكز التجارية وتعلن رفع الجاهزية الطبية الكاملة.",
-            "رابط المصدر المباشر": "https://sabq.org",
-            "نوع الحدث": "🟢 إيجابي / جاهزية"
-        },
-        {
-            "التاريخ والوقت": (now - timedelta(hours=2)).strftime('%Y-%m-%d %H:%M'),
-            "اسم المغرد / المصدر": "@Meteo_Taif",
-            "المنشور / رصد منصة X": f"تحذير عاجل من الأرصاد: هطول أمطار غزيرة وجريان للسيول على أجزاء واسعة من محافظة {branch_name} خلال الساعات القادمة.",
-            "رابط المصدر المباشر": "https://x.com" + urllib.parse.quote(f"تحذير أمطار {branch_name}"),
-            "نوع الحدث": "⚠️ تحذير / طوارئ عاجلة"
-        }
+        {"التاريخ والوقت": (now - timedelta(minutes=7)).strftime('%Y-%m-%d %H:%M'), "اسم المغرد / المصدر": "@Taif_Voice", "المنشور / رصد منصة X": f"تأخر كبير وتكدس في طوارئ مستشفيات {branch_name} والانتظار يتجاوز 5 ساعات وسط تذمر الأهالي! أين المناوبين؟", "رابط المصدر المباشر": "https://x.com" + urllib.parse.quote(f"طوارئ مستشفيات {branch_name}"), "نوع الحدث": "🔴 سلبي / شكوى حرج"},
+        {"التاريخ والوقت": (now - timedelta(minutes=22)).strftime('%Y-%m-%d %H:%M'), "اسم المغرد / المصدر": "@Defa3Madani", "المنشور / رصد منصة X": f"الدفاع المدني ينجح في إخماد حريق اندلع في مستودع تجاري بـ {branch_name} دون وقوع أي خسائر بشرية ولله الحمد.", "رابط المصدر المباشر": "https://x.com" + urllib.parse.quote(f"حريق الدفاع المدني {branch_name}"), "نوع الحدث": "🔥 حريق / حادثة"},
+        {"التاريخ والوقت": (now - timedelta(hours=1)).strftime('%Y-%m-%d %H:%M'), "اسم المغرد / المصدر": "صحيفة سبق الالكترونية", "المنشور / رصد منصة X": f"صحة {branch_name} تطلق حملة وطنية مكثفة للتبرع بالدم بالمراكز التجارية وتعلن رفع الجاهزية الطبية الكاملة.", "رابط المصدر المباشر": "https://sabq.org", "نوع الحدث": "🟢 إيجابي / جاهزية"},
+        {"التاريخ والوقت": (now - timedelta(hours=2)).strftime('%Y-%m-%d %H:%M'), "اسم المغرد / المصدر": "@Meteo_Taif", "المنشور / رصد منصة X": f"تحذير عاجل من الأرصاد: هطول أمطار غزيرة وجريان للسيول على أجزاء واسعة من محافظة {branch_name} خلال الساعات القادمة.", "رابط المصدر المباشر": "https://x.com" + urllib.parse.quote(f"تحذير أمطار {branch_name}"), "نوع الحدث": "⚠️ تحذير / طوارئ عاجلة"}
     ]
     return pd.DataFrame(simulated_data)
 
 def check_login():
-    if "logged_in" not in st.session_state:
-        st.session_state["logged_in"] = False
+    if "logged_in" not in st.session_state: st.session_state["logged_in"] = False
     if not st.session_state["logged_in"]:
         st.markdown("<h2 style='text-align: right; color: #007A33;'>🔒 بوابة الدخول الآمنة - غرفة العمليات</h2>", unsafe_allow_html=True)
         user_input = st.text_input("اسم المستخدم:")
@@ -89,22 +60,21 @@ def check_login():
         if st.button("🔓 تسجيل الدخول"):
             if user_input == "admin" and pass_input == "MOH@2026":
                 st.session_state["logged_in"] = True
-                st.success("تم التحقق بنجاح! جاري تحميل المنظومة...")
                 st.rerun()
-            else:
-                st.error("❌ صلاحيات الدخول غير صحيحة.")
+            else: st.error("❌ صلاحيات الدخول غير صحيحة.")
         return False
     return True
 
 if check_login():
-    @st.cache_data(ttl=120)  # تحديث مكثف وسريع كل دقيقتين لمواكبة طوارئ إكس والحرائق
+    @st.cache_data(ttl=60)  # تسريع التحديث كل دقيقة واحدة لمواكبة الأخبار العاجلة
     def fetch_health_news(search_query, force_simulation=False):
-        if force_simulation:
-            return generate_simulation_data(search_query), True
+        if force_simulation: return generate_simulation_data(search_query), True
         try:
             search_query = search_query.strip()
             base_url = "https://google.com"
-            raw_query = f"{search_query} (صحة OR مستشفى OR طوارئ OR حريق OR حوادث OR تحذير OR الدفاع المدني OR تغريدة)"
+            
+            # استعلام ذكي وموسع ومبسط جداً لضمان جلب أكبر عدد ممكن من الأخبار الحقيقية عن الطائف
+            raw_query = f"الطائف (صحة OR مستشفى OR طوارئ OR حريق OR حوادث OR تحذير OR أمطار OR شكوى)"
             
             params = {"q": raw_query, "gl": "SA", "hl": "ar", "ceid": "SA:ar"}
             headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
@@ -122,9 +92,9 @@ if check_login():
             positive_keywords = ["إشادة", "شكر", "نجاح", "تميز", "جاهزية", "تكريم", "افتتاح", "شكراً"]
             
             items = root.findall('.//item')
-            if not items or len(items) == 0:
-                return generate_simulation_data(search_query), True
+            if not items or len(items) == 0: return generate_simulation_data(search_query), True
                 
+            # زيادة الحد الأقصى هنا في حلقة القراءة البرمجية إلى 40 خبراً حقيقياً ومحدثاً
             for item in items[:40]:
                 title = item.find('title').text
                 raw_link = item.find('link').text
@@ -132,22 +102,17 @@ if check_login():
                 
                 clean_link = get_clean_url(raw_link, title)
                 author_name = extract_username(title, clean_link)
-                display_title = title.split(" - ")[0].strip() if " - " in title else title
+                display_title = title.split(" - ").strip() if " - " in title else title
                 
                 try:
                     clean_date = datetime.strptime(pub_date, '%a, %d %b %Y %H:%M:%S %Z').strftime('%Y-%m-%d %H:%M')
-                except:
-                    clean_date = pub_date
+                except: clean_date = pub_date
 
                 sentiment = "🟡 محايد / استفسار"
-                if any(word in title for word in alert_keywords):
-                    sentiment = "⚠️ تحذير / طوارئ عاجلة"
-                elif any(word in title for word in fire_keywords):
-                    sentiment = "🔥 حريق / حادثة"
-                elif any(word in title for word in negative_keywords):
-                    sentiment = "🔴 سلبي / شكوى حرج"
-                elif any(word in title for word in positive_keywords):
-                    sentiment = "🟢 إيجابي / جاهزية"
+                if any(word in title for word in alert_keywords): sentiment = "⚠️ تحذير / طوارئ عاجلة"
+                elif any(word in title for word in fire_keywords): sentiment = "🔥 حريق / حادثة"
+                elif any(word in title for word in negative_keywords): sentiment = "🔴 سلبي / شكوى حرج"
+                elif any(word in title for word in positive_keywords): sentiment = "🟢 إيجابي / جاهزية"
                     
                 news_list.append({
                     "التاريخ والوقت": clean_date,
@@ -158,23 +123,19 @@ if check_login():
                 })
                 
             return pd.DataFrame(news_list), False
-        except:
-            return generate_simulation_data(search_query), True
+        except: return generate_simulation_data(search_query), True
 
     def convert_df_to_html(dataframe, branch):
         html_content = f"""
-        <html>
-        <head><meta charset="utf-8">
-        <style>
+        <html><head><meta charset="utf-8"><style>
             body {{ font-family: 'Segoe UI', sans-serif; direction: rtl; text-align: right; margin: 30px; }}
             h1 {{ color: #007A33; border-bottom: 2px solid #007A33; padding-bottom: 10px; }}
             table {{ width: 100%; border-collapse: collapse; margin-top: 20px; }}
             th, td {{ border: 1px solid #ddd; padding: 12px; text-align: right; }}
             th {{ background-color: #007A33; color: white; }}
             tr:nth-child(even) {{ background-color: #f9f9f9; }}
-        </style></head>
-        <body>
-            <h1>🏥 تقرير الرصد الموحد ومنصة X لقطاع الطوارئ - {branch}</h1>
+        </style></head><body>
+            <h1>🏥 تقرير الرصد الموحد لقطاع الطوارئ والصحة - {branch}</h1>
             <p><strong>تاريخ استخراج التقرير:</strong> {datetime.now().strftime('%Y-%m-%d %H:%M')}</p>
             <table>
                 <tr><th>التاريخ والوقت</th><th>اسم المغرد / المصدر</th><th>تفاصيل البلاغ</th><th>نوع الحدث</th></tr>
