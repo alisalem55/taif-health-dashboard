@@ -35,10 +35,10 @@ def check_login():
     return True
 
 if check_login():
-    @st.cache_data(ttl=1)  # خفض مدة الكاش إلى ثانية واحدة لإجبار المتصفح على جلب الملف فوراً
-    def fetch_health_news(search_query):
+    @st.cache_data(ttl=1)  # إلغاء كاش السيرفر لقراءة التحديثات فوراً
+    def fetch_health_news():
         try:
-            # استخدام الرابط المباشر للملف مع إضافة كود الوقت لمنع الكاش نهائياً وتخطي حظر السيرفرات
+            # استخدام توقيت عشوائي لإجبار السيرفر على كسر كاش جيت هاب
             timestamp = int(time.time())
             url = f"https://githubusercontent.com{timestamp}"
             
@@ -95,7 +95,8 @@ if check_login():
         st.cache_data.clear()
         st.rerun()
 
-    df = fetch_health_news(branch_name)
+    # استدعاء مباشر لملف data.csv دون شروط فلترة النص الجانبي
+    df = fetch_health_news()
     if not df.empty:
         total = len(df)
         neg_count = len(df[df["نوع الحدث"] == "🔴 سلبي / شكوى حرج"])
